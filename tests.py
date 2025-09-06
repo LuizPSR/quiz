@@ -52,49 +52,55 @@ def test_create_question_with_invalid_points():
 
 def test_create_multiple_choices():
     q1 = Question('q1')
-    a = q1.add_choice('a', False)
-    b = q1.add_choice('b', False)
-    c = q1.add_choice('c', False)
+    a = q1.add_choice('a')
+    b = q1.add_choice('b')
+    c = q1.add_choice('c')
     assert len(q1.choices) == 3
 
 def test_remove_choice_by_id():
     q1 = Question('q1')
-    a = q1.add_choice('a', False)
-    b = q1.add_choice('b', False)
-    c = q1.add_choice('c', False)
+    a = q1.add_choice('a')
+    b = q1.add_choice('b')
+    c = q1.add_choice('c')
 
     q1.remove_choice_by_id(b.id)
     assert b not in q1.choices
 
 def test_remove_all_choices():
     q1 = Question('q1')
-    a = q1.add_choice('a', False)
-    b = q1.add_choice('b', False)
-    c = q1.add_choice('c', False)
+    a = q1.add_choice('a')
+    b = q1.add_choice('b')
+    c = q1.add_choice('c')
 
     q1.remove_all_choices()
     assert len(q1.choices) == 0
 
-def test_check_invalid_id_detection():
+def test_remove_invalid_id():
     q1 = Question('q1')
-    a = q1.add_choice('a', False)
+    a = q1.add_choice('a')
     with pytest.raises(Exception):
         q1.remove_choice_by_id(a.id+1)
 
-def test_set_correct_choice():
+def test_setting_correct_choice():
     q1 = Question('q1')
-    a = q1.add_choice('a', False)
-    b = q1.add_choice('b', False)
-    c = q1.add_choice('c', False)
+    a = q1.add_choice('a')
+    b = q1.add_choice('b')
+    c = q1.add_choice('c')
 
     q1.set_correct_choices([b.id])
     assert b.is_correct == True
 
-def test_correct_selected_choices():
-    q1 = Question('q1', max_selections=2)
+def test_setting_correct_invalid_choice():
+    q1 = Question('q1')
+    a = q1.add_choice('a')
+    with pytest.raises(Exception):
+        q1.set_correct_choices(a.id+1)
+
+def test_correcting_selection():
+    q1 = Question('q1')
     a = q1.add_choice('a', True)
-    b = q1.add_choice('b', False)
-    c = q1.add_choice('c', False)
+    b = q1.add_choice('b')
+    c = q1.add_choice('c')
 
     answer = q1.correct_selected_choices([a.id])
     assert len(answer) == 1
@@ -105,17 +111,31 @@ def test_correct_selected_choices():
 def test_valid_multiple_selection():
     q1 = Question('q1', max_selections=2)
     a = q1.add_choice('a', True)
-    b = q1.add_choice('b', False)
-    c = q1.add_choice('c', False)
+    b = q1.add_choice('b')
+    c = q1.add_choice('c')
 
     answer = q1.correct_selected_choices([a.id, b.id])
     assert len(answer) == 1
 
-def test_invalid_multiple_selection():
+    answer = q1.correct_selected_choices([b.id])
+    assert len(answer) == 0
+
+# I run out of ideas for the fixture, so a moved one of the regular test to it and made more unit tests
+
+@pytest.fixture
+def example_question():
     q1 = Question('q1', max_selections=2)
     a = q1.add_choice('a', True)
-    b = q1.add_choice('b', False)
-    c = q1.add_choice('c', False)
+    b = q1.add_choice('b')
+    c = q1.add_choice('c')
+    d = q1.add_choice('d', True)
+    return q1
 
+def test_correcting_invalid_ids(example_question):
+    # should ignore as if wrong
+    answer = example_question.correct_selected_choices([example_question.choices[-1].id+1])
+    assert len(answer) == 0
+
+def test_too_many_selections(example_question):
     with pytest.raises(Exception):
-        q1.correct_selected_choices([a.id, b.id,c.id])
+        q1.correct_selected_choices([1, 2, 3])
